@@ -33,7 +33,19 @@ module "blog_vpc" {
   }
 }
 
-module "blog_alb" {
+resource "aws_instance" "blog" {
+  ami                    = data.aws_ami.app_ami.id
+  instance_type          = var.instance_type
+  vpc_security_group_ids = [module.blog_sg.security_group_id]
+
+  subnet_id = module.blog_vpc.public_subnets[0]
+
+  tags = {
+    Name = "HelloWorld"
+  }
+}
+
+module "alb" {
   source = "terraform-aws-modules/alb/aws"
 
   name            = "blog-alb"
@@ -59,6 +71,7 @@ module "blog_alb" {
       protocol         = "HTTP"
       port             = 80
       target_type      = "instance"
+      target_id        = aws_instance.blog.id
     }
   }
 
@@ -79,22 +92,4 @@ module "blog_sg" {
 
   egress_rules       = ["all-all"]
   egress_cidr_blocks = ["0.0.0.0/0"]
-}
-
-resource "aws_launch_template" "blog_lt" {
-  name_prefix   = "blog-"
-  image_id      = data.aws_ami.app_ami.id
-  instance_type = var.instance_type
-  vpc_security_group_ids = [module.blog_sg.security_group_id]
-}
-
-resource "aws_autoscaling_group" "blog" {
-  availability_zones = ["us-west-1a"]
-  max_size           = 1
-  min_size           = 2
-
-  launch_template {
-    id      = aws_launch_template.blog_lt.id
-    version = "$Latest"
-  }
 }
