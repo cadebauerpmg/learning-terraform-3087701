@@ -88,7 +88,7 @@ resource "aws_launch_template" "blog_lt" {
   vpc_security_group_ids = [module.blog_sg.security_group_id]
 }
 
-resource "aws_autoscaling_group" "blog-asg" {
+resource "aws_autoscaling_group" "blog" {
   availability_zones = ["us-west-1a"]
   max_size           = 1
   min_size           = 2
